@@ -6,7 +6,7 @@ from models import ResnetGenerator
 import argparse
 from utils import Preprocess
 
-
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 parser = argparse.ArgumentParser()
 parser.add_argument('--photo_path', type=str, help='input photo path')
 parser.add_argument('--save_path', type=str, help='cartoon save path')
@@ -20,8 +20,9 @@ class Photo2Cartoon:
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.net = ResnetGenerator(ngf=32, img_size=256, light=True).to(self.device)
         
-        assert os.path.exists('./models/photo2cartoon_weights.pt'), "[Step1: load weights] Can not find 'photo2cartoon_weights.pt' in folder 'models!!!'"
-        params = torch.load('./models/photo2cartoon_weights.pt', map_location=self.device)
+        path = 'C:\Users\VIPLAB\Documents\GitHub\photo2cartoon\experiment\train-size256-ch32-True-lr0.0001-adv1-cyc50-id1-identity10-cam1000\cartonn_data_params_latest.pt'
+        assert os.path.exists(path), "[Step1: load weights] Can not find 'photo2cartoon_weights.pt' in folder 'models!!!'"
+        params = torch.load(path, map_location=self.device)
         self.net.load_state_dict(params['genA2B'])
         print('[Step1: load weights] success!')
 

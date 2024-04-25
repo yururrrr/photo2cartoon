@@ -64,6 +64,7 @@ def check_args(args):
 
 
 def main():
+    
     args = parse_args()
     if args is None:
         exit()

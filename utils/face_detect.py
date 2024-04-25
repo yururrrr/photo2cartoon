@@ -7,7 +7,11 @@ import face_alignment
 class FaceDetect:
     def __init__(self, device, detector):
         # landmarks will be detected by face_alignment library. Set device = 'cuda' if use GPU.
-        self.fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, device=device, face_detector=detector)
+        # try:
+#     self.fa = face_alignment.FaceAlignment(face_alignment. LandmarksType._2D, Flip input=True, device=self.device) 
+# except:
+#     self.fa = face_alignment.FaceAlignment(face_alignment. LandmarksType.TWO_D, Flip input=True, device=self.device)
+        self.fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, device=device, face_detector=detector)
 
     def align(self, image):
         landmarks = self.__get_max_face_landmarks(image)
