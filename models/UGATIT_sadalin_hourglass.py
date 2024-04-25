@@ -7,7 +7,7 @@ from .networks import *
 from utils import *
 from glob import glob
 from .face_features import FaceFeatures
-
+import matplotlib.pyplot as plt
 
 class UgatitSadalinHourglass(object):
     def __init__(self, args):
@@ -164,6 +164,11 @@ class UgatitSadalinHourglass(object):
             self.disLB = nn.DataParallel(self.disLB, device_ids=self.gpu_ids)
             
         # training loop
+        steps = []
+        # iterations = []
+        # times = []
+        d_loss = []
+        g_loss = []
         print('training start !')
         start_time = time.time()
         for step in range(start_iter, self.iteration + 1):
@@ -172,16 +177,16 @@ class UgatitSadalinHourglass(object):
                 self.D_optim.param_groups[0]['lr'] -= (self.lr / (self.iteration // 2))
 
             try:
-                real_A, _ = trainA_iter.next()
+                real_A, _ = next(trainA_iter)
             except:
                 trainA_iter = iter(self.trainA_loader)
-                real_A, _ = trainA_iter.next()
+                real_A, _ = next(trainA_iter)
 
             try:
-                real_B, _ = trainB_iter.next()
+                real_B, _ = next(trainB_iter)
             except:
                 trainB_iter = iter(self.trainB_loader)
-                real_B, _ = trainB_iter.next()
+                real_B, _ = next(trainB_iter)
 
             real_A, real_B = real_A.to(self.device), real_B.to(self.device)
 
@@ -295,6 +300,10 @@ class UgatitSadalinHourglass(object):
 
             if step % 10 == 0:
                 print("[%5d/%5d] time: %4.4f d_loss: %.8f, g_loss: %.8f" % (step, self.iteration, time.time() - start_time, Discriminator_loss, Generator_loss))
+                steps.append(step)
+                d_loss.append(Discriminator_loss)
+                g_loss.append(Generator_loss)
+                
             if step % self.print_freq == 0:
                 train_sample_num = 5
                 test_sample_num = 5
@@ -305,16 +314,16 @@ class UgatitSadalinHourglass(object):
                 with torch.no_grad():
                     for _ in range(train_sample_num):
                         try:
-                            real_A, _ = trainA_iter.next()
+                            real_A, _ = next(trainA_iter)
                         except:
                             trainA_iter = iter(self.trainA_loader)
-                            real_A, _ = trainA_iter.next()
+                            real_A, _ = next(trainA_iter)
 
                         try:
-                            real_B, _ = trainB_iter.next()
+                            real_B, _ = next(trainB_iter)
                         except:
                             trainB_iter = iter(self.trainB_loader)
-                            real_B, _ = trainB_iter.next()
+                            real_B, _ = next(trainB_iter)
                         real_A, real_B = real_A.to(self.device), real_B.to(self.device)
 
                         fake_A2B, _, fake_A2B_heatmap = self.genA2B(real_A)
@@ -344,16 +353,16 @@ class UgatitSadalinHourglass(object):
 
                     for _ in range(test_sample_num):
                         try:
-                            real_A, _ = testA_iter.next()
+                            real_A, _ = next(testA_iter)
                         except:
                             testA_iter = iter(self.testA_loader)
-                            real_A, _ = testA_iter.next()
+                            real_A, _ = next(testA_iter)
 
                         try:
-                            real_B, _ = testB_iter.next()
+                            real_B, _ = next(testB_iter)
                         except:
                             testB_iter = iter(self.testB_loader)
-                            real_B, _ = testB_iter.next()
+                            real_B, _ = next(testB_iter)
                         real_A, real_B = real_A.to(self.device), real_B.to(self.device)
 
                         fake_A2B, _, fake_A2B_heatmap = self.genA2B(real_A)
@@ -407,6 +416,21 @@ class UgatitSadalinHourglass(object):
                     params['disLA'] = self.disLA.state_dict()
                     params['disLB'] = self.disLB.state_dict()
                 torch.save(params, os.path.join(self.result_dir, self.dataset + '_params_latest.pt'))
+
+        # plt.figure(figsize=(10, 6))
+        # plt.plot(steps, d_loss)
+        # plt.xlabel('Step')
+        # plt.ylabel('Discriminator Loss')
+        # plt.title('Step v.s Discriminator Loss')
+        # plt.savefig('./d_loss.png')
+        
+        # plt.clf()
+        # plt.plot(steps, g_loss)
+        # plt.xlabel('Step')
+        # plt.ylabel('Generator Loss')
+        # plt.title('Step v.s Generator Loss')
+        # plt.savefig('./g_loss.png')
+
 
     def save(self, dir, step):
         params = {}
