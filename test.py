@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import cv2
 import torch
@@ -17,17 +18,17 @@ os.makedirs(os.path.dirname(args.save_path), exist_ok=True)
 class Photo2Cartoon:
     def __init__(self):
         self.pre = Preprocess()
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
         self.net = ResnetGenerator(ngf=32, img_size=256, light=True).to(self.device)
         
-        path = 'C:\Users\VIPLAB\Documents\GitHub\photo2cartoon\experiment\train-size256-ch32-True-lr0.0001-adv1-cyc50-id1-identity10-cam1000\cartonn_data_params_latest.pt'
+        path = 'C:/Users/VIP/Documents/GitHub/photo2cartoon/experiment/train-size256-ch32-True-lr0.0001-adv1-cyc50-id1-identity30-cam1000/cartoon_data_params_latest.pt'
         assert os.path.exists(path), "[Step1: load weights] Can not find 'photo2cartoon_weights.pt' in folder 'models!!!'"
         params = torch.load(path, map_location=self.device)
         self.net.load_state_dict(params['genA2B'])
-        print('[Step1: load weights] success!')
+        print('[Step1: load ssssweights] success!')
 
     def inference(self, img):
-        # face alignment and segmentation
+        # face alignssssssssment and segmentation
         face_rgba = self.pre.process(img)
         if face_rgba is None:
             print('[Step2: face detect] can not detect face!!!')
@@ -45,7 +46,6 @@ class Photo2Cartoon:
         # inference
         with torch.no_grad():
             cartoon = self.net(face)[0][0]
-
         # post-process
         cartoon = np.transpose(cartoon.cpu().numpy(), (1, 2, 0))
         cartoon = (cartoon + 1) * 127.5
@@ -55,10 +55,44 @@ class Photo2Cartoon:
         return cartoon
 
 
+# if __name__ == '__main__':
+#     img = cv2.cvtColor(cv2.imread(args.photo_path), cv2.COLOR_BGR2RGB)
+#     c2p = Photo2Cartoon()
+#     cartoon = c2p.inference(img)
+#     if cartoon is not None:
+#         cv2.imwrite(args.save_path, cartoon)
+#         print('Cartoon portrait has been saved successfully!')
 if __name__ == '__main__':
-    img = cv2.cvtColor(cv2.imread(args.photo_path), cv2.COLOR_BGR2RGB)
     c2p = Photo2Cartoon()
-    cartoon = c2p.inference(img)
-    if cartoon is not None:
-        cv2.imwrite(args.save_path, cartoon)
-        print('Cartoon portrait has been saved successfully!')
+    
+    input_photos = ['0003.png', '0004.png', '0005.png', '0006.png', '0007.png', '0008.png', '0009.png', '0010.png', '0011.png', '0012.png']  #
+    
+    input_imgs = []
+    output_imgs = []
+    
+    for photo_path in input_photos:
+        path = os.path.join(args.photo_path, photo_path)
+        img = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
+        
+        cartoon = c2p.inference(img)
+        if cartoon is not None:
+            # cv2.imwrite(args.save_path, cartoon)
+            print('Cartoon portrait has been saved successfully!')
+            
+            img = cv2.resize(img, (256, 256))
+            cartoon = cv2.resize(cartoon, (256, 256))
+            
+         
+            input_imgs.append(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+            output_imgs.append(cartoon)
+    
+    # combine input and output images horizontally
+    input_imgs = cv2.hconcat(input_imgs)
+    output_imgs = cv2.hconcat(output_imgs)
+    
+    # combine input and output images vertically
+    result = cv2.vconcat([input_imgs, output_imgs])
+    
+    # save combined image
+    cv2.imwrite(args.save_path, result)
+

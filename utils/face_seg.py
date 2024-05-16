@@ -21,7 +21,6 @@ class FaceSeg:
         self.output_op = self._sess.graph.get_tensor_by_name('sigmoid/Sigmoid:0')
 
     def _restore_from_pb(self):
-        with self._sess.as_default():
             with self._graph.as_default():
                 with gfile.FastGFile(self.pb_file_path, 'rb') as f:
                     graph_def = tf.compat.v1.GraphDef()
